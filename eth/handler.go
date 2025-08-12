@@ -309,10 +309,6 @@ func (h *handler) runEthPeer(peer *eth.Peer, handler eth.Handler) error {
 	// after this will be sent via broadcasts.
 	h.syncTransactions(peer)
 
-	// Create a notification channel for pending requests if the peer goes down
-	dead := make(chan struct{})
-	defer close(dead)
-
 	// If we have any explicit peer required block hashes, request them
 	for number, hash := range h.requiredBlocks {
 		resCh := make(chan *eth.Response)
