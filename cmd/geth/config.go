@@ -113,6 +113,10 @@ type gethConfig struct {
 }
 
 func loadConfig(file string, cfg *gethConfig) error {
+	if file == defaultConfigName {
+		return loadDefaultConfig(cfg)
+	}
+
 	f, err := os.Open(file)
 	if err != nil {
 		return err

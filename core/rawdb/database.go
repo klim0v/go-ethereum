@@ -251,10 +251,15 @@ func Open(db ethdb.KeyValueStore, opts OpenOptions) (ethdb.Database, error) {
 	//     not frozen anything yet. Ensure that no blocks are missing yet from the
 	//     key-value store, since that would mean we already had an old freezer.
 
+	ancientTail, err := frdb.Tail()
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve Tail from ancient %v", err)
+	}
+
 	// If the genesis hash is empty, we have a new key-value store, so nothing to
 	// validate in this method. If, however, the genesis hash is not nil, compare
 	// it to the freezer content.
-	if kvgenesis, _ := db.Get(headerHashKey(0)); len(kvgenesis) > 0 {
+	if kvgenesis, _ := db.Get(headerHashKey(0)); len(kvgenesis) > 0 && ancientTail == 0 {
 		if frozen, _ := frdb.Ancients(); frozen > 0 {
 			// If the freezer already contains something, ensure that the genesis blocks
 			// match, otherwise we might mix up freezers across chains and destroy both

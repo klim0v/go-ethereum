@@ -1,0 +1,6 @@
+dependencies:
+- name: prysm
+  repository: https://ethpandaops.github.io/ethereum-helm-charts
+  version: 1.1.5
+digest: sha256:718fbd0cd4e424b0b507cf6c3227a3760434cdd8ea89cfcb7dd0ec13dbe2cb1f
+generated: "2025-06-23T12:21:41.584198577+03:00"

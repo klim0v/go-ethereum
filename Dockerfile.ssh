@@ -1,0 +1,40 @@
+FROM ubuntu:latest
+
+# Install only the necessary components for OpenSSH
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends openssh-server && \
+    mkdir /var/run/sshd && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Set root password (change 'rootpassword' to a secure password)
+RUN echo 'root:rootpassword' | chpasswd
+
+# Permit root login via SSH
+RUN sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin no/' /etc/ssh/sshd_config
+
+# Create user 'user' with password 'userpassword' and bash shell
+RUN useradd -m -s /bin/bash user && echo 'user:userpassword' | chpasswd
+
+# Give 'user' sudo rights
+RUN apt-get update && apt-get install -y --no-install-recommends sudo && \
+    usermod -aG sudo user && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Allow 'user' to use sudo without password
+RUN echo 'user ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/user && chmod 0440 /etc/sudoers.d/user
+
+# Set up SSH authorized_keys for 'user'
+RUN mkdir -p /home/user/.ssh && \
+    chmod 700 /home/user/.ssh
+
+# Enable public key authentication
+RUN sed -i 's/#PubkeyAuthentication yes/PubkeyAuthentication yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#AuthorizedKeysFile/AuthorizedKeysFile/' /etc/ssh/sshd_config
+
+# Permit 'user' to login via SSH and allow password authentication
+RUN sed -i 's/#PasswordAuthentication yes/PasswordAuthentication no/' /etc/ssh/sshd_config
+
+# Expose SSH port
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]

@@ -5,6 +5,7 @@ package p2p
 import (
 	"crypto/ecdsa"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/p2p/enode"
 	"github.com/ethereum/go-ethereum/p2p/nat"
@@ -16,6 +17,10 @@ var _ = (*configMarshaling)(nil)
 // MarshalTOML marshals as TOML.
 func (c Config) MarshalTOML() (interface{}, error) {
 	type Config struct {
+		TEEVerifier      common.Address
+		TEEPassList      []common.Hash
+		TEEMaxPeers      int
+		PublicSync       bool
 		PrivateKey       *ecdsa.PrivateKey `toml:"-"`
 		MaxPeers         int
 		MaxPendingPeers  int `toml:",omitempty"`
@@ -40,6 +45,10 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		Logger           log.Logger `toml:"-"`
 	}
 	var enc Config
+	enc.TEEVerifier = c.TEEVerifier
+	enc.TEEPassList = c.TEEPassList
+	enc.TEEMaxPeers = c.TEEMaxPeers
+	enc.PublicSync = c.PublicSync
 	enc.PrivateKey = c.PrivateKey
 	enc.MaxPeers = c.MaxPeers
 	enc.MaxPendingPeers = c.MaxPendingPeers
@@ -68,6 +77,10 @@ func (c Config) MarshalTOML() (interface{}, error) {
 // UnmarshalTOML unmarshals from TOML.
 func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	type Config struct {
+		TEEVerifier      *common.Address
+		TEEPassList      []common.Hash
+		TEEMaxPeers      *int
+		PublicSync       *bool
 		PrivateKey       *ecdsa.PrivateKey `toml:"-"`
 		MaxPeers         *int
 		MaxPendingPeers  *int `toml:",omitempty"`
@@ -94,6 +107,18 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	var dec Config
 	if err := unmarshal(&dec); err != nil {
 		return err
+	}
+	if dec.TEEVerifier != nil {
+		c.TEEVerifier = *dec.TEEVerifier
+	}
+	if dec.TEEPassList != nil {
+		c.TEEPassList = dec.TEEPassList
+	}
+	if dec.TEEMaxPeers != nil {
+		c.TEEMaxPeers = *dec.TEEMaxPeers
+	}
+	if dec.PublicSync != nil {
+		c.PublicSync = *dec.PublicSync
 	}
 	if dec.PrivateKey != nil {
 		c.PrivateKey = dec.PrivateKey

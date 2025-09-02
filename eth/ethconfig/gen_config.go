@@ -11,7 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/core/txpool/blobpool"
 	"github.com/ethereum/go-ethereum/core/txpool/legacypool"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
+	"github.com/ethereum/go-ethereum/eth/tool"
 	"github.com/ethereum/go-ethereum/miner"
+	"github.com/ethereum/go-ethereum/relay"
 )
 
 // MarshalTOML marshals as TOML.
@@ -27,6 +29,7 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		NoPrefetch              bool
 		TxLookupLimit           uint64 `toml:",omitempty"`
 		TransactionHistory      uint64 `toml:",omitempty"`
+		BlockHistory            uint64 `toml:",omitempty"`
 		LogHistory              uint64 `toml:",omitempty"`
 		LogNoHistory            bool   `toml:",omitempty"`
 		LogExportCheckpoints    string
@@ -45,6 +48,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 		Preimages               bool
 		FilterLogCacheSize      int
 		Miner                   miner.Config
+		Tool                    tool.Config
+		Relay                   relay.Config
 		TxPool                  legacypool.Config
 		BlobPool                blobpool.Config
 		GPO                     gasprice.Config
@@ -68,6 +73,7 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.NoPrefetch = c.NoPrefetch
 	enc.TxLookupLimit = c.TxLookupLimit
 	enc.TransactionHistory = c.TransactionHistory
+	enc.BlockHistory = c.BlockHistory
 	enc.LogHistory = c.LogHistory
 	enc.LogNoHistory = c.LogNoHistory
 	enc.LogExportCheckpoints = c.LogExportCheckpoints
@@ -86,6 +92,8 @@ func (c Config) MarshalTOML() (interface{}, error) {
 	enc.Preimages = c.Preimages
 	enc.FilterLogCacheSize = c.FilterLogCacheSize
 	enc.Miner = c.Miner
+	enc.Tool = c.Tool
+	enc.Relay = c.Relay
 	enc.TxPool = c.TxPool
 	enc.BlobPool = c.BlobPool
 	enc.GPO = c.GPO
@@ -113,6 +121,7 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		NoPrefetch              *bool
 		TxLookupLimit           *uint64 `toml:",omitempty"`
 		TransactionHistory      *uint64 `toml:",omitempty"`
+		BlockHistory            *uint64 `toml:",omitempty"`
 		LogHistory              *uint64 `toml:",omitempty"`
 		LogNoHistory            *bool   `toml:",omitempty"`
 		LogExportCheckpoints    *string
@@ -131,6 +140,8 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 		Preimages               *bool
 		FilterLogCacheSize      *int
 		Miner                   *miner.Config
+		Tool                    *tool.Config
+		Relay                   *relay.Config
 		TxPool                  *legacypool.Config
 		BlobPool                *blobpool.Config
 		GPO                     *gasprice.Config
@@ -176,6 +187,9 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.TransactionHistory != nil {
 		c.TransactionHistory = *dec.TransactionHistory
+	}
+	if dec.BlockHistory != nil {
+		c.BlockHistory = *dec.BlockHistory
 	}
 	if dec.LogHistory != nil {
 		c.LogHistory = *dec.LogHistory
@@ -230,6 +244,12 @@ func (c *Config) UnmarshalTOML(unmarshal func(interface{}) error) error {
 	}
 	if dec.Miner != nil {
 		c.Miner = *dec.Miner
+	}
+	if dec.Tool != nil {
+		c.Tool = *dec.Tool
+	}
+	if dec.Relay != nil {
+		c.Relay = *dec.Relay
 	}
 	if dec.TxPool != nil {
 		c.TxPool = *dec.TxPool

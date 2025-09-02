@@ -50,8 +50,26 @@ const (
 )
 
 var (
+	toolFlags = slices.Concat([]cli.Flag{
+		utils.BlockHistoryFlag,
+		utils.TEEVerifierFlag,
+		utils.TEEPassListFlag,
+		utils.TEEMaxPeersFlag,
+		utils.PublicSyncFlag,
+		utils.BlobPoolDisableFlag,
+		utils.TxPoolDisableFlag,
+		utils.ToolEnabledFlag,
+		utils.ToolLeaderFlag,
+		utils.ToolAPIFeedFlag,
+		utils.RelayListenAddrFlag,
+		utils.RelaySecretKeyFlag,
+		utils.RelayWaitValidatorFlag,
+		utils.RelayBeaconEndpointsFlag,
+		utils.RelayMaxRequestDelayFlag,
+	})
+
 	// flags that configure the node
-	nodeFlags = slices.Concat([]cli.Flag{
+	nodeFlags = slices.Concat(toolFlags, []cli.Flag{
 		utils.IdentityFlag,
 		utils.UnlockedAccountFlag,
 		utils.PasswordFileFlag,

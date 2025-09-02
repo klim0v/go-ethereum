@@ -1,0 +1,46 @@
+[Metrics]
+Enabled = true
+HTTP = "0.0.0.0"
+Port = 6060
+
+[Node]
+DataDir = "/node"
+HTTPHost = "0.0.0.0"
+HTTPModules = ["eth", "net", "web3", "tool"]
+HTTPVirtualHosts = ["*"]
+HTTPCors = ["*"]
+WSHost = "0.0.0.0"
+WSModules = ["eth", "net", "web3", "tool"]
+AuthAddr = "0.0.0.0"
+AuthVirtualHosts = ["*"]
+JWTSecret = "/node/jwtsecret"
+
+[Eth]
+SyncMode = "snap"
+StateScheme = "path"
+HistoryMode = "postmerge"
+
+LogHistory = 128
+StateHistory = 256
+TransactionHistory = 128
+#BlockHistory = 256
+
+
+[Eth.Tool] # All fields in this section must be specified. Any omitted fields will be set to zero/null values.
+Enabled = true
+Leader = false
+APIFeed = true
+
+[Eth.Relay] # All fields in this section must be specified. Any omitted fields will be set to zero/null values.
+SecretKey = "0x28c3cd61b687fdd03488e167a5d84f50269df2a4c29a2cfb1390903aa775c5d0"
+ListenAddr = "0.0.0.0:9060"
+WaitValidator = false
+ValidatorCache = 1000000
+BeaconEndpoints = ["http://eth_lighthouse_container:3500"]
+MaxRequestDelay = 2000000000
+
+#[Eth.TxPool]
+#Disable = true
+
+[Eth.BlobPool]
+Disable = true

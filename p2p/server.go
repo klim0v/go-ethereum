@@ -928,6 +928,7 @@ func (srv *Server) setupConn(c *conn, dialDest *enode.Node) error {
 		clog.Trace("Wrong devp2p handshake identity", "phsid", hex.EncodeToString(phs.ID))
 		return DiscUnexpectedIdentity
 	}
+
 	c.caps, c.name = phs.Caps, phs.Name
 	err = srv.checkpoint(c, srv.checkpointAddPeer)
 	if err != nil {

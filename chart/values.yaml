@@ -1,0 +1,116 @@
+# Application deployment configuration
+replicaCount: 1
+# Modified Geth node container image configuration
+image:
+  pullPolicy: Always
+  tag: "deploy-649d398"
+  name: gcr.io/constellation-458212/tool-node
+# SSH sidecar container for remote access
+sshImage:
+  repository: gcr.io/constellation-458212/tool-node-ssh
+  pullPolicy: Always
+  tag: "latest"
+# Kubernetes resource limits and scheduling
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
+# Geth node command line arguments
+args:
+- --hoodi
+- --config=default
+- --nat=none
+- --tool.leader
+- --public-sync
+- --tee-verifier=0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF
+- --datadir=/data
+- --authrpc.port=8551
+- --authrpc.addr=0.0.0.0
+- --relay.beacon-endpoints=http://lighthouse:5052
+- --authrpc.jwtsecret=/node/jwtsecret
+- --authrpc.vhosts=*
+- --http
+- --http.api=engine,eth,web3,net
+- --http.port=8545
+- --http.addr=0.0.0.0
+- --ws
+- --ws.api=engine,eth,web3,net
+- --ws.port=8546
+- --ws.addr=0.0.0.0
+- --ws.origins=*
+- --metrics
+- --metrics.addr=0.0.0.0
+- --metrics.port=6060
+- --history.chain=all
+# Persistent storage configuration for blockchain data
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 500Gi
+# SSH service NodePort for external access
+sshNodePort: 32222
+# Container registry authentication
+imagePullSecrets:
+- name: gcr-json-key
+# Global configuration shared across components
+global:
+  jwt: "dfe4b9cf3b1854ab1a0ae0e04696143990f5c599f056d80f1d1d8433585289c1"
+# Prysm beacon chain consensus client configuration
+prysm:
+  enabled: true
+  image:
+    #    repository: gcr.io/prysmaticlabs/prysm/beacon-chain
+    #    tag: stable
+    repository: gcr.io/constellation-458212/prysm
+    tag: fix-stater
+  imagePullSecrets:
+  - name: gcr-json-key
+  executionEndpoint: http://tool-node-app-tool-node:8551
+  network: hoodi
+  extraArgs:
+  - "--accept-terms-of-use"
+  - --checkpoint-sync-url="https://checkpoint-sync.hoodi.ethpandaops.io"
+  #- "--genesis-beacon-api-url=https://mainnet.beaconcha.in"
+  - "--p2p-udp-port=13001"
+  - "--p2p-tcp-port=13001"
+  - "--prepare-all-payloads"
+  - "--execution-endpoint=http://tool-node-app-tool-node:8551"
+  - "--hoodi"
+  - "--verbosity=debug"
+  p2pPort: 13001
+  persistence:
+    enabled: true
+    size: 100Gi
+# Kubernetes service name
+serviceName: tool-node
+# Main ingress for relay endpoint access
+ingress:
+  enabled: true
+  host: "relay-hoodi.nuconstruct.xyz"
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls: true
+# RPC API ingress for external blockchain interactions
+rpcIngress:
+  enabled: true
+  host: "rpc-hoodi.nuconstruct.xyz"
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  tls: true
+# Test commands:
+# HTTP RPC: curl -X POST -H "Content-Type: application/json" --data '{"jsonrpc":"2.0","method":"eth_blockNumber","params":[],"id":1}' https://rpc-hoodi.nuconstruct.xyz/
+# WebSocket: wscat -c wss://rpc-hoodi.nuconstruct.xyz/
+
+# SSH public keys for authorized remote access
+sshAuthorizedKeys: |-
+  ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBNGUVxj4TDmCszXwqxR/Oujw1nfpny4yAM/oWZbUAX4NEKjPSLZ8YBqcDIp+ujCSmDNTNdnZZEzqD6zTRTVMldQ= taz@tazthink
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIP7WtEZUxiEn9hSvRsGetooxbKLjyHSJCBpJpqKDlU9p ac@nuconstruct.xyz
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGRc0wR5UekA6jM1Eg3dpyZBM89lJMUcTGjnMi18Kx6p admin@admins-MacBook-Pro.local
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzp2Fx29p/sXgR3SVYZt17+nTGlHSQKTj5HzMwX8fHX as@nuconstruct.xyz
+  ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDzp2Fx29p/sXgR3SVYZt17+nTGlHSQKTj5HzMwX8fHX as@nuconstruct.xyz

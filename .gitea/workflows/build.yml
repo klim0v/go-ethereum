@@ -1,0 +1,149 @@
+name: Build Tool Node Image
+on:
+  push:
+    branches: [ deploy ]
+    paths:
+      - '**/*.go'
+      - 'go.mod'
+      - 'go.sum'
+      - 'Dockerfile'
+      - 'Dockerfile.ssh'
+      - '.gitea/workflows/build.yml'
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Specific commit SHA (leave empty to use branch)'
+        required: false
+        default: ''
+      branch:
+        description: 'Branch to build from'
+        required: false
+        default: 'deploy'
+      tag:
+        description: 'Image tag'
+        required: false
+        default: 'latest'
+
+jobs:
+  trigger-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+          
+      - name: Configure kubectl
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
+          
+      - name: Submit Argo Workflow
+        run: |
+          # Determine commit and branch
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            COMMIT="${{ github.event.inputs.commit }}"
+            BRANCH="${{ github.event.inputs.branch }}"
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            COMMIT="${{ github.sha }}"
+            BRANCH="${{ github.ref_name }}"
+            TAG="latest"
+          fi
+          
+          # Generate unique workflow name
+          WORKFLOW_NAME="tool-node-build-$(date +%s)-$(echo $RANDOM | md5sum | head -c 8)"
+          
+          # Create and submit workflow
+          WORKFLOW_OUTPUT=$(cat <<EOF | kubectl apply -f -
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            generateName: tool-node-build-
+            namespace: argocd
+            labels:
+              git-commit: "${COMMIT}"
+              git-branch: "${BRANCH}"
+              triggered-by: "gitea-action"
+          spec:
+            entrypoint: main
+            arguments:
+              parameters:
+                - name: commit
+                  value: "${COMMIT}"
+                - name: branch
+                  value: "${BRANCH}"
+                - name: base-image
+                  value: "gcr.io/constellation-458212/tool-node"
+                - name: tag
+                  value: "${TAG}"
+            workflowTemplateRef:
+              name: tool-node-build-template
+          EOF
+          )
+          
+          # Extract workflow name
+          WORKFLOW_NAME=$(echo "$WORKFLOW_OUTPUT" | grep created | awk '{print $1}' | sed 's/workflow.argoproj.io\///')
+          echo "Created workflow: $WORKFLOW_NAME"
+          echo "WORKFLOW_NAME=$WORKFLOW_NAME" >> $GITHUB_ENV
+          
+      - name: Wait for workflow completion and get logs
+        run: |
+          echo "Waiting for workflow $WORKFLOW_NAME to complete..."
+          
+          # Wait for completion (max 30 minutes)
+          for i in {1..180}; do
+            STATUS=$(kubectl get workflow $WORKFLOW_NAME -n argocd -o jsonpath='{.status.phase}' 2>/dev/null || echo "Pending")
+            echo "Workflow status: $STATUS"
+            
+            if [ "$STATUS" = "Succeeded" ]; then
+              echo "Workflow completed successfully!"
+              echo "WORKFLOW_SUCCESS=true" >> $GITHUB_ENV
+              break
+            elif [ "$STATUS" = "Failed" ] || [ "$STATUS" = "Error" ]; then
+              echo "Workflow failed!"
+              echo "WORKFLOW_SUCCESS=false" >> $GITHUB_ENV
+              break
+            fi
+            
+            sleep 10
+          done
+          
+          # Get logs from all containers
+          echo "=== Workflow Logs ==="
+          kubectl logs -l workflows.argoproj.io/workflow=$WORKFLOW_NAME -n argocd --tail=1000 || echo "Could not fetch logs"
+          
+      - name: Update values.yaml if build succeeded
+        if: env.WORKFLOW_SUCCESS == 'true'
+        run: |
+          # Configure git
+          git config --global user.name "Gitea Actions"
+          git config --global user.email "actions@gitea.nuconstruct.xyz"
+          
+          # Update image tag in values.yaml
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            NEW_TAG="${{ github.event.inputs.tag }}"
+          else
+            NEW_TAG="${{ github.sha }}"
+          fi
+          
+          # Update both tool-node and ssh images
+          sed -i "s|tag: \".*\"|tag: \"$NEW_TAG\"|g" chart/values.yaml
+          
+          # Commit and push changes
+          git add chart/values.yaml
+          git commit -m "Auto-update image tags to $NEW_TAG [skip ci]" || echo "No changes to commit"
+          git push origin ${{ github.ref_name }} || echo "Push failed"
+          
+      - name: Workflow summary
+        run: |
+          if [ "$WORKFLOW_SUCCESS" = "true" ]; then
+            echo "✅ Build completed successfully and values.yaml updated"
+          else
+            echo "❌ Build failed - check logs above"
+            exit 1
+          fi

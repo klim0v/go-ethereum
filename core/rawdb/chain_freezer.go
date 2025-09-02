@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -52,6 +53,8 @@ type chainFreezer struct {
 	quit    chan struct{}
 	wg      sync.WaitGroup
 	trigger chan chan struct{} // Manual blocking freeze trigger, test determinism
+
+	blockHistory atomic.Uint64
 }
 
 // newChainFreezer initializes the freezer for ancient chain segment.
@@ -294,6 +297,8 @@ func (f *chainFreezer) freeze(db ethdb.KeyValueStore) {
 			context = append(context, []interface{}{"hash", ancients[n-1]}...)
 		}
 		log.Debug("Deep froze chain segment", context...)
+
+		f.tryPruneHistoryBlock(f.readFinalizedNumber(db))
 
 		// Avoid database thrashing with tiny writes
 		if frozen-first < freezerBatchLimit {

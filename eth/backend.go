@@ -46,6 +46,8 @@ import (
 	"github.com/ethereum/go-ethereum/eth/gasprice"
 	"github.com/ethereum/go-ethereum/eth/protocols/eth"
 	"github.com/ethereum/go-ethereum/eth/protocols/snap"
+	prototool "github.com/ethereum/go-ethereum/eth/protocols/tool"
+	"github.com/ethereum/go-ethereum/eth/tool"
 	"github.com/ethereum/go-ethereum/eth/tracers"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/event"
@@ -59,6 +61,7 @@ import (
 	"github.com/ethereum/go-ethereum/p2p/dnsdisc"
 	"github.com/ethereum/go-ethereum/p2p/enode"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/relay"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 	gethversion "github.com/ethereum/go-ethereum/version"
@@ -113,6 +116,8 @@ type Ethereum struct {
 
 	APIBackend *EthAPIBackend
 
+	tool     *tool.Tool
+	relay    *relay.Relay
 	miner    *miner.Miner
 	gasPrice *big.Int
 
@@ -181,6 +186,9 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	engine, err := ethconfig.CreateConsensusEngine(chainConfig, chainDb)
 	if err != nil {
+		return nil, err
+	}
+	if err = chainDb.SetupBlockHistory(config.BlockHistory); err != nil {
 		return nil, err
 	}
 	// Set networkID to chainID by default.
@@ -300,7 +308,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	}
 	eth.blobTxPool = blobpool.New(config.BlobPool, eth.blockchain, legacyPool.HasPendingAuth)
 
-	eth.txPool, err = txpool.New(config.TxPool.PriceLimit, eth.blockchain, []txpool.SubPool{legacyPool, eth.blobTxPool})
+	eth.txPool, err = txpool.New(config.TxPool.PriceLimit, eth.blockchain, filterSubPools(config, legacyPool, eth.blobTxPool))
 	if err != nil {
 		return nil, err
 	}
@@ -315,9 +323,26 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 		stack.RegisterLifecycle(eth.localTxTracker)
 	}
 
+	eth.miner = miner.New(eth, config.Miner, eth.engine)
+	eth.miner.SetExtra(makeExtraData(config.Miner.ExtraData))
+	eth.miner.SetPrioAddresses(config.TxPool.Locals)
+	if config.Tool.Enabled {
+		eth.tool = tool.New(config.Tool, eth.blockchain, eth.Synced)
+		eth.miner.SetTool(eth.tool)
+
+		eth.relay, err = relay.NewRelay(eth.config.Relay, eth.miner)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	// Permit the downloader to use the trie cache allowance during fast sync
 	cacheLimit := options.TrieCleanLimit + options.TrieDirtyLimit + options.SnapshotLimit
 	if eth.handler, err = newHandler(&handlerConfig{
+		Tool:        eth.tool,
+		Relay:       eth.relay,
+		TEEVerifier: newTEEVerifier(eth),
+
 		NodeID:         eth.p2pServer.Self().ID(),
 		Database:       chainDb,
 		Chain:          eth.blockchain,
@@ -333,10 +358,6 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 
 	eth.dropper = newDropper(eth.p2pServer.MaxDialedConns(), eth.p2pServer.MaxInboundConns())
 
-	eth.miner = miner.New(eth, config.Miner, eth.engine)
-	eth.miner.SetExtra(makeExtraData(config.Miner.ExtraData))
-	eth.miner.SetPrioAddresses(config.TxPool.Locals)
-
 	eth.APIBackend = &EthAPIBackend{stack.Config().ExtRPCEnabled(), stack.Config().AllowUnprotectedTxs, eth, nil}
 	if eth.APIBackend.allowUnprotectedTxs {
 		log.Info("Unprotected transactions allowed")
@@ -350,6 +371,7 @@ func New(stack *node.Node, config *ethconfig.Config) (*Ethereum, error) {
 	stack.RegisterAPIs(eth.APIs())
 	stack.RegisterProtocols(eth.Protocols())
 	stack.RegisterLifecycle(eth)
+	registerRelay(stack, eth.relay)
 
 	// Successful startup; push a marker and check previous unclean shutdowns.
 	eth.shutdownTracker.MarkStartup()
@@ -378,6 +400,7 @@ func makeExtraData(extra []byte) []byte {
 // NOTE, some of these services probably need to be moved to somewhere else.
 func (s *Ethereum) APIs() []rpc.API {
 	apis := ethapi.GetAPIs(s.APIBackend)
+	apis = append(apis, toolAPIs(s)...)
 
 	// Append all the local APIs and return
 	return append(apis, []rpc.API{
@@ -425,6 +448,9 @@ func (s *Ethereum) Protocols() []p2p.Protocol {
 	if s.config.SnapshotCache > 0 {
 		protos = append(protos, snap.MakeProtocols((*snapHandler)(s.handler))...)
 	}
+	if s.tool.Enabled() {
+		protos = append(protos, prototool.MakeProtocols((*toolHandler)(s.handler))...)
+	}
 	return protos
 }
 
@@ -439,7 +465,7 @@ func (s *Ethereum) Start() error {
 	s.shutdownTracker.Start()
 
 	// Start the networking layer
-	s.handler.Start(s.p2pServer.MaxPeers)
+	s.handler.StartWithTOOL(s.p2pServer.MaxPeers, s.p2pServer.TEEMaxPeers, !s.p2pServer.PublicSync)
 
 	// Start the connection manager
 	s.dropper.Start(s.p2pServer, func() bool { return !s.Synced() })
@@ -564,6 +590,10 @@ func (s *Ethereum) Stop() error {
 	s.discmix.Close()
 	s.dropper.Stop()
 	s.handler.Stop()
+
+	if s.tool != nil {
+		s.tool.Close()
+	}
 
 	// Then stop everything else.
 	ch := make(chan struct{})

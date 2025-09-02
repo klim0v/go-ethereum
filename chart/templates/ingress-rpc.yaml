@@ -1,0 +1,43 @@
+{{- if .Values.rpcIngress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "tool-node.fullname" . }}-rpc
+  labels:
+    app: {{ include "tool-node.name" . }}
+  annotations:
+    {{- if .Values.rpcIngress.className }}
+    kubernetes.io/ingress.class: {{ .Values.rpcIngress.className }}
+    {{- end }}
+    {{- with .Values.rpcIngress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  {{- if .Values.rpcIngress.className }}
+  ingressClassName: {{ .Values.rpcIngress.className }}
+  {{- end }}
+  {{- if .Values.rpcIngress.tls }}
+  tls:
+    - hosts:
+        - {{ .Values.rpcIngress.host }}
+      secretName: {{ include "tool-node.fullname" . }}-rpc-tls
+  {{- end }}
+  rules:
+    - host: {{ .Values.rpcIngress.host }}
+      http:
+        paths:
+          - path: /ws
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "tool-node.fullname" . }}
+                port:
+                  number: 8546
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "tool-node.fullname" . }}
+                port:
+                  number: 8545
+{{- end }}

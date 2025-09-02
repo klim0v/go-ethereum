@@ -77,6 +77,8 @@ func (m *mutation) isDelete() bool {
 // must be created with new root and updated database for accessing post-
 // commit states.
 type StateDB struct {
+	snapshotTracker snapshotTracker
+
 	db         Database
 	prefetcher *triePrefetcher
 	reader     Reader
@@ -745,6 +747,8 @@ func (s *StateDB) GetRefund() uint64 {
 // the journal as well as the refunds. Finalise, however, will not push any updates
 // into the tries just yet. Only IntermediateRoot or Commit will do that.
 func (s *StateDB) Finalise(deleteEmptyObjects bool) {
+	s.captureNotFinalizedChanges()
+
 	addressesToPrefetch := make([]common.Address, 0, len(s.journal.dirties))
 	for addr := range s.journal.dirties {
 		obj, exist := s.stateObjects[addr]

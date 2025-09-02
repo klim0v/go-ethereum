@@ -51,6 +51,7 @@ var (
 type peerSet struct {
 	peers     map[string]*ethPeer // Peers connected on the `eth` protocol
 	snapPeers int                 // Number of `snap` compatible peers for connection prioritization
+	toolPeers map[string]*toolPeer
 
 	snapWait map[string]chan *snap.Peer // Peers connected on `eth` waiting for their snap extension
 	snapPend map[string]*snap.Peer      // Peers connected on the `snap` protocol, but not yet on `eth`
@@ -63,10 +64,11 @@ type peerSet struct {
 // newPeerSet creates a new peer set to track the active participants.
 func newPeerSet() *peerSet {
 	return &peerSet{
-		peers:    make(map[string]*ethPeer),
-		snapWait: make(map[string]chan *snap.Peer),
-		snapPend: make(map[string]*snap.Peer),
-		quitCh:   make(chan struct{}),
+		peers:     make(map[string]*ethPeer),
+		toolPeers: make(map[string]*toolPeer),
+		snapWait:  make(map[string]chan *snap.Peer),
+		snapPend:  make(map[string]*snap.Peer),
+		quitCh:    make(chan struct{}),
 	}
 }
 
@@ -207,7 +209,7 @@ func (ps *peerSet) len() int {
 	ps.lock.RLock()
 	defer ps.lock.RUnlock()
 
-	return len(ps.peers)
+	return len(ps.peers) - len(ps.toolPeers)
 }
 
 // snapLen returns if the current number of `snap` peers in the set.

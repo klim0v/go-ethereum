@@ -1,0 +1,394 @@
+{
+  "contracts": {
+    "MockAttestation": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_hash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "publishNodeIDAttestation",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_hash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "recallNodeIDAttestation",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_hash",
+              "type": "bytes32"
+            }
+          ],
+          "name": "verifyNodeIDAttestation",
+          "outputs": [
+            {
+              "internalType": "bool",
+              "name": "",
+              "type": "bool"
+            }
+          ],
+          "stateMutability": "view",
+          "type": "function"
+        }
+      ],
+      "contractName": "MockAttestation",
+      "deploymentBytecode": {
+        "bytecode": "0x6080604052348015600e575f5ffd5b506101068061001c5f395ff3fe6080604052348015600e575f5ffd5b5060043610603a575f3560e01c8063a9cf4e4514603e578063d0728f61146071578063efa05c84146098575b5f5ffd5b605d604936600460ba565b5f9081526020819052604090205460ff1690565b604051901515815260200160405180910390f35b6096607c36600460ba565b5f908152602081905260409020805460ff19166001179055565b005b609660a336600460ba565b5f908152602081905260409020805460ff19169055565b5f6020828403121560c9575f5ffd5b503591905056fea2646970667358221220b496434945c66c2fee298ebf6f481d13192408ff84dba9f5f62991ffaa8f74da64736f6c634300081c0033"
+      },
+      "devdoc": {
+        "kind": "dev",
+        "methods": {},
+        "version": 1
+      },
+      "methodIdentifiers": {
+        "publishNodeIDAttestation(bytes32)": "0xd0728f61",
+        "recallNodeIDAttestation(bytes32)": "0xefa05c84",
+        "verifyNodeIDAttestation(bytes32)": "0xa9cf4e45"
+      },
+      "runtimeBytecode": {
+        "bytecode": "0x6080604052348015600e575f5ffd5b5060043610603a575f3560e01c8063a9cf4e4514603e578063d0728f61146071578063efa05c84146098575b5f5ffd5b605d604936600460ba565b5f9081526020819052604090205460ff1690565b604051901515815260200160405180910390f35b6096607c36600460ba565b5f908152602081905260409020805460ff19166001179055565b005b609660a336600460ba565b5f908152602081905260409020805460ff19169055565b5f6020828403121560c9575f5ffd5b503591905056fea2646970667358221220b496434945c66c2fee298ebf6f481d13192408ff84dba9f5f62991ffaa8f74da64736f6c634300081c0033"
+      },
+      "sourceId": "contracts/MockAttestation.sol",
+      "sourcemap": "25:459:0:-:0;;;;;;;;;;;;;;;;;;;",
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    },
+    "MockState": {
+      "abi": [
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "_stateVarA",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "_stateVarB",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "address payable",
+              "name": "destroyBeneficiary",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "payable",
+          "type": "constructor"
+        },
+        {
+          "inputs": [],
+          "name": "Create2EmptyBytecode",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            }
+          ],
+          "name": "EthSendFailed",
+          "type": "error"
+        },
+        {
+          "inputs": [],
+          "name": "FailedDeployment",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes",
+              "name": "res",
+              "type": "bytes"
+            }
+          ],
+          "name": "ForwardCallFailed",
+          "type": "error"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "balance",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "needed",
+              "type": "uint256"
+            }
+          ],
+          "name": "InsufficientBalance",
+          "type": "error"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "uint256",
+              "name": "val",
+              "type": "uint256"
+            },
+            {
+              "indexed": false,
+              "internalType": "address",
+              "name": "to",
+              "type": "address"
+            }
+          ],
+          "name": "EthSent",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [],
+          "name": "Fallback",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [],
+          "name": "Received",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "val",
+              "type": "bytes32"
+            }
+          ],
+          "name": "StateVarAChanged",
+          "type": "event"
+        },
+        {
+          "anonymous": false,
+          "inputs": [
+            {
+              "indexed": false,
+              "internalType": "bytes32",
+              "name": "val",
+              "type": "bytes32"
+            }
+          ],
+          "name": "StateVarBChanged",
+          "type": "event"
+        },
+        {
+          "stateMutability": "nonpayable",
+          "type": "fallback"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "amount",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes32",
+              "name": "salt",
+              "type": "bytes32"
+            },
+            {
+              "internalType": "bytes",
+              "name": "bytecode",
+              "type": "bytes"
+            }
+          ],
+          "name": "deploy",
+          "outputs": [
+            {
+              "internalType": "address",
+              "name": "",
+              "type": "address"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address payable",
+              "name": "addr",
+              "type": "address"
+            }
+          ],
+          "name": "destroySelf",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "address payable",
+              "name": "target",
+              "type": "address"
+            },
+            {
+              "internalType": "uint256",
+              "name": "val",
+              "type": "uint256"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "name": "forwardCall",
+          "outputs": [
+            {
+              "internalType": "bytes",
+              "name": "",
+              "type": "bytes"
+            }
+          ],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "uint256",
+              "name": "value",
+              "type": "uint256"
+            },
+            {
+              "internalType": "address payable",
+              "name": "to",
+              "type": "address"
+            }
+          ],
+          "name": "sendEth",
+          "outputs": [],
+          "stateMutability": "payable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "val",
+              "type": "bytes32"
+            }
+          ],
+          "name": "writeStateVarA",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "inputs": [
+            {
+              "internalType": "bytes32",
+              "name": "val",
+              "type": "bytes32"
+            }
+          ],
+          "name": "writeStateVarB",
+          "outputs": [],
+          "stateMutability": "nonpayable",
+          "type": "function"
+        },
+        {
+          "stateMutability": "payable",
+          "type": "receive"
+        }
+      ],
+      "contractName": "MockState",
+      "deploymentBytecode": {
+        "bytecode": "0x6080604052604051610729380380610729833981016040819052602091604a565b5f83905560018290556001600160a01b03811615604357806001600160a01b0316ff5b505050608a565b5f5f5f60608486031215605b575f5ffd5b83516020850151604086015191945092506001600160a01b0381168114607f575f5ffd5b809150509250925092565b610692806100975f395ff3fe608060405260043610610058575f3560e01c806334368602146100bd5780634de48708146100d257806366cfa057146100f15780636effec501461012d578063ac84bb0914610159578063c773413d1461017857610087565b36610087576040517f544c765b33ca411cce832250371569244f765a17fcd217832be093f0fd5fa45b905f90a1005b348015610092575f5ffd5b506040517f52b4643cca14f009d3eef2bb2517ebc5918c9152c5038af8258985bdd6ca2580905f90a1005b6100d06100cb36600461044c565b610197565b005b3480156100dd575f5ffd5b506100d06100ec366004610476565b61027e565b3480156100fc575f5ffd5b5061011061010b3660046104a3565b61028a565b6040516001600160a01b0390911681526020015b60405180910390f35b348015610138575f5ffd5b5061014c610147366004610568565b6102a0565b60405161012491906105eb565b348015610164575f5ffd5b506100d0610173366004610620565b61032d565b348015610183575f5ffd5b506100d0610192366004610620565b610369565b604080515f808252602082019092526001600160a01b0383169084906040516101c09190610637565b5f6040518083038185875af1925050503d805f81146101fa576040519150601f19603f3d011682016040523d82523d5f602084013e6101ff565b606091505b50509050806102385760405163dfb2171760e01b81526001600160a01b0383166004820152602481018490526044015b60405180910390fd5b604080518481526001600160a01b03841660208201527f4ee1338359c1b5a98bc94ce977ede958f48bd5d443611d7e0845cb5f36f17dde910160405180910390a1505050565b806001600160a01b0316ff5b5f61029684848461039d565b90505b9392505050565b60605f5f866001600160a01b03168686866040516102bf92919061064d565b5f6040518083038185875af1925050503d805f81146102f9576040519150601f19603f3d011682016040523d82523d5f602084013e6102fe565b606091505b50915091508161032357806040516302a39deb60e31b815260040161022f91906105eb565b9695505050505050565b60018190556040518181527f748c53f96b5a07255248792ecc5345d10fd0818cb4b001a6504a9864a514af65906020015b60405180910390a150565b5f8190556040518181527f6f12eb082ce76cf1df2cbe519a5e748393c3e45de1fd52987f7665e509683bd49060200161035e565b5f834710156103c85760405163cf47918160e01b81524760048201526024810185905260440161022f565b81515f036103e957604051631328927760e21b815260040160405180910390fd5b8282516020840186f590503d15198115161561040a576040513d5f823e3d81fd5b6001600160a01b0381166102995760405163b06ebf3d60e01b815260040160405180910390fd5b80356001600160a01b0381168114610447575f5ffd5b919050565b5f5f6040838503121561045d575f5ffd5b8235915061046d60208401610431565b90509250929050565b5f60208284031215610486575f5ffd5b61029982610431565b634e487b7160e01b5f52604160045260245ffd5b5f5f5f606084860312156104b5575f5ffd5b8335925060208401359150604084013567ffffffffffffffff8111156104d9575f5ffd5b8401601f810186136104e9575f5ffd5b803567ffffffffffffffff8111156105035761050361048f565b604051601f8201601f19908116603f0116810167ffffffffffffffff811182821017156105325761053261048f565b604052818152828201602001881015610549575f5ffd5b816020840160208301375f602083830101528093505050509250925092565b5f5f5f5f6060858703121561057b575f5ffd5b61058485610431565b935060208501359250604085013567ffffffffffffffff8111156105a6575f5ffd5b8501601f810187136105b6575f5ffd5b803567ffffffffffffffff8111156105cc575f5ffd5b8760208284010111156105dd575f5ffd5b949793965060200194505050565b602081525f82518060208401528060208501604085015e5f604082850101526040601f19601f83011684010191505092915050565b5f60208284031215610630575f5ffd5b5035919050565b5f82518060208501845e5f920191825250919050565b818382375f910190815291905056fea26469706673582212206526fa52eee0a85009554c19326f61128a0f5aa6f90304fa8ed75d7b448f1e1564736f6c634300081c0033"
+      },
+      "devdoc": {
+        "errors": {
+          "Create2EmptyBytecode()": [
+            {
+              "details": "There's no code to deploy."
+            }
+          ],
+          "FailedDeployment()": [
+            {
+              "details": "The deployment failed."
+            }
+          ],
+          "InsufficientBalance(uint256,uint256)": [
+            {
+              "details": "The ETH balance of the account is not enough to perform the operation."
+            }
+          ]
+        },
+        "kind": "dev",
+        "methods": {
+          "deploy(uint256,bytes32,bytes)": {
+            "details": "Deploys a contract using `CREATE2`. The address where the contract will be deployed can be known in advance via {computeAddress}. The bytecode for a contract can be obtained from Solidity with `type(contractName).creationCode`. Requirements: - `bytecode` must not be empty. - `salt` must have not been used for `bytecode` already. - the factory must have a balance of at least `amount`. - if `amount` is non-zero, `bytecode` must have a `payable` constructor. https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Create2.sol"
+          }
+        },
+        "version": 1
+      },
+      "methodIdentifiers": {
+        "deploy(uint256,bytes32,bytes)": "0x66cfa057",
+        "destroySelf(address)": "0x4de48708",
+        "forwardCall(address,uint256,bytes)": "0x6effec50",
+        "sendEth(uint256,address)": "0x34368602",
+        "writeStateVarA(bytes32)": "0xc773413d",
+        "writeStateVarB(bytes32)": "0xac84bb09"
+      },
+      "runtimeBytecode": {
+        "bytecode": "0x608060405260043610610058575f3560e01c806334368602146100bd5780634de48708146100d257806366cfa057146100f15780636effec501461012d578063ac84bb0914610159578063c773413d1461017857610087565b36610087576040517f544c765b33ca411cce832250371569244f765a17fcd217832be093f0fd5fa45b905f90a1005b348015610092575f5ffd5b506040517f52b4643cca14f009d3eef2bb2517ebc5918c9152c5038af8258985bdd6ca2580905f90a1005b6100d06100cb36600461044c565b610197565b005b3480156100dd575f5ffd5b506100d06100ec366004610476565b61027e565b3480156100fc575f5ffd5b5061011061010b3660046104a3565b61028a565b6040516001600160a01b0390911681526020015b60405180910390f35b348015610138575f5ffd5b5061014c610147366004610568565b6102a0565b60405161012491906105eb565b348015610164575f5ffd5b506100d0610173366004610620565b61032d565b348015610183575f5ffd5b506100d0610192366004610620565b610369565b604080515f808252602082019092526001600160a01b0383169084906040516101c09190610637565b5f6040518083038185875af1925050503d805f81146101fa576040519150601f19603f3d011682016040523d82523d5f602084013e6101ff565b606091505b50509050806102385760405163dfb2171760e01b81526001600160a01b0383166004820152602481018490526044015b60405180910390fd5b604080518481526001600160a01b03841660208201527f4ee1338359c1b5a98bc94ce977ede958f48bd5d443611d7e0845cb5f36f17dde910160405180910390a1505050565b806001600160a01b0316ff5b5f61029684848461039d565b90505b9392505050565b60605f5f866001600160a01b03168686866040516102bf92919061064d565b5f6040518083038185875af1925050503d805f81146102f9576040519150601f19603f3d011682016040523d82523d5f602084013e6102fe565b606091505b50915091508161032357806040516302a39deb60e31b815260040161022f91906105eb565b9695505050505050565b60018190556040518181527f748c53f96b5a07255248792ecc5345d10fd0818cb4b001a6504a9864a514af65906020015b60405180910390a150565b5f8190556040518181527f6f12eb082ce76cf1df2cbe519a5e748393c3e45de1fd52987f7665e509683bd49060200161035e565b5f834710156103c85760405163cf47918160e01b81524760048201526024810185905260440161022f565b81515f036103e957604051631328927760e21b815260040160405180910390fd5b8282516020840186f590503d15198115161561040a576040513d5f823e3d81fd5b6001600160a01b0381166102995760405163b06ebf3d60e01b815260040160405180910390fd5b80356001600160a01b0381168114610447575f5ffd5b919050565b5f5f6040838503121561045d575f5ffd5b8235915061046d60208401610431565b90509250929050565b5f60208284031215610486575f5ffd5b61029982610431565b634e487b7160e01b5f52604160045260245ffd5b5f5f5f606084860312156104b5575f5ffd5b8335925060208401359150604084013567ffffffffffffffff8111156104d9575f5ffd5b8401601f810186136104e9575f5ffd5b803567ffffffffffffffff8111156105035761050361048f565b604051601f8201601f19908116603f0116810167ffffffffffffffff811182821017156105325761053261048f565b604052818152828201602001881015610549575f5ffd5b816020840160208301375f602083830101528093505050509250925092565b5f5f5f5f6060858703121561057b575f5ffd5b61058485610431565b935060208501359250604085013567ffffffffffffffff8111156105a6575f5ffd5b8501601f810187136105b6575f5ffd5b803567ffffffffffffffff8111156105cc575f5ffd5b8760208284010111156105dd575f5ffd5b949793965060200194505050565b602081525f82518060208401528060208501604085015e5f604082850101526040601f19601f83011684010191505092915050565b5f60208284031215610630575f5ffd5b5035919050565b5f82518060208501845e5f920191825250919050565b818382375f910190815291905056fea26469706673582212206526fa52eee0a85009554c19326f61128a0f5aa6f90304fa8ed75d7b448f1e1564736f6c634300081c0033"
+      },
+      "sourceId": "contracts/MockState.sol",
+      "sourcemap": "78:3247:2:-:0;;;569:321;;;;;;;;;;;;;;;;;;:::i;:::-;683:9;:22;;;723:9;:22;;;-1:-1:-1;;;;;767:34:2;;;763:117;;842:18;-1:-1:-1;;;;;829:32:2;;763:117;569:321;;;78:3247;;14:526:3;110:6;118;126;179:2;167:9;158:7;154:23;150:32;147:52;;;195:1;192;185:12;147:52;240:16;;346:2;331:18;;325:25;421:2;406:18;;400:25;240:16;;-1:-1:-1;325:25:3;-1:-1:-1;;;;;;456:33:3;;444:46;;434:74;;504:1;501;494:12;434:74;527:7;517:17;;;14:526;;;;;:::o;:::-;78:3247:2;;;;;;",
+      "userdoc": {
+        "kind": "user",
+        "methods": {},
+        "version": 1
+      }
+    }
+  },
+  "manifest": "ethpm/3",
+  "sources": {
+    "contracts/MockAttestation.sol": {
+      "content": "pragma solidity ^0.8.0;\n\ncontract MockAttestation {\n\n    mapping(bytes32 => bool) internal isNodeIDAttested;\n\n    function publishNodeIDAttestation(bytes32 _hash) external {\n        isNodeIDAttested[_hash] = true;\n    }\n\n    function verifyNodeIDAttestation(bytes32 _hash) external view returns(bool) {\n        return isNodeIDAttested[_hash];\n    }\n\n    // just in case ?\n    function recallNodeIDAttestation(bytes32 _hash) external {\n        isNodeIDAttested[_hash] = false;\n    }\n\n}\n",
+      "urls": []
+    },
+    "contracts/MockState.sol": {
+      "content": "pragma solidity ^0.8.0;\n\nimport \"@openzeppelin/contracts/utils/Create2.sol\";\n\ncontract MockState {\n\n        // Errors\n\n        error EthSendFailed(address to, uint256 value);\n\n        error ForwardCallFailed(bytes res);\n\n        // Events\n\n        event Fallback();\n\n        event Received();\n\n        event StateVarAChanged(bytes32 val);\n\n        event StateVarBChanged(bytes32 val);\n\n        event EthSent(uint256 val, address to);\n\n        // State Variables\n\n        bytes32 internal stateVarA;\n\n        bytes32 internal stateVarB;\n\n        // Constructor\n\n        constructor(bytes32 _stateVarA, bytes32 _stateVarB, address payable destroyBeneficiary) payable {\n                stateVarA = _stateVarA;\n                stateVarB = _stateVarB;\n                if (destroyBeneficiary != address(0x0)) {\n                        selfdestruct(destroyBeneficiary);\n                }\n        }\n\n        // Fallback\n\n        receive() payable external {\n                emit Received();\n        }\n\n        fallback() external {\n                emit Fallback();\n        }\n\n        // General Functions\n\n        function writeStateVarA(bytes32 val) external {\n                stateVarA = val;\n                emit StateVarAChanged(val);\n        }\n\n        function writeStateVarB(bytes32 val) external {\n                stateVarB = val;\n                emit StateVarBChanged(val);\n        }\n\n        function destroySelf(address payable addr) external {\n                selfdestruct(addr);\n        }\n\n        function sendEth(uint256 value, address payable to) external payable {\n                (bool success, ) = to.call{value: value}(new bytes(0));\n                if (!success) {\n                    revert EthSendFailed(to, value);\n                }\n                emit EthSent(value, to);\n        }\n\n        function forwardCall(address payable target, uint256 val, bytes calldata data) external returns(bytes memory) {\n                (bool success, bytes memory res) = target.call{value: val}(data);\n                if (!success) {\n                        revert ForwardCallFailed(res);\n                }\n                return res;\n        }\n\n//        function getBytecode(bytes32 _stateVarA, bytes32 _stateVarB) external pure returns (bytes memory) {\n//                bytes memory bytecode = type(MockState).creationCode;\n//                return abi.encodePacked(bytecode, abi.encode(_stateVarA, _stateVarB));\n//        }\n\n        /**\n        * @dev Deploys a contract using `CREATE2`. The address where the contract\n        * will be deployed can be known in advance via {computeAddress}.\n        *\n        * The bytecode for a contract can be obtained from Solidity with\n        * `type(contractName).creationCode`.\n        *\n        * Requirements:\n        *\n        * - `bytecode` must not be empty.\n        * - `salt` must have not been used for `bytecode` already.\n        * - the factory must have a balance of at least `amount`.\n        * - if `amount` is non-zero, `bytecode` must have a `payable` constructor.\n        * https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/utils/Create2.sol\n        */\n        function deploy(uint256 amount, bytes32 salt, bytes memory bytecode) external returns (address) {\n                return Create2.deploy(amount, salt, bytecode);\n        }\n\n}\n",
+      "urls": []
+    }
+  }
+}

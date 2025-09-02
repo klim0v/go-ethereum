@@ -49,7 +49,7 @@ var (
 	DefaultAuthVhosts  = []string{"localhost"} // Default virtual hosts for the authenticated apis
 	DefaultAuthOrigins = []string{"localhost"} // Default origins for the authenticated apis
 	DefaultAuthPrefix  = ""                    // Default prefix for the authenticated apis
-	DefaultAuthModules = []string{"eth", "engine"}
+	DefaultAuthModules = []string{"eth", "engine", "maintenance"}
 )
 
 // DefaultConfig contains reasonable default settings.
@@ -59,18 +59,19 @@ var DefaultConfig = Config{
 	AuthAddr:             DefaultAuthHost,
 	AuthPort:             DefaultAuthPort,
 	AuthVirtualHosts:     DefaultAuthVhosts,
-	HTTPModules:          []string{"net", "web3"},
+	HTTPModules:          []string{"net", "web3", "tool"},
 	HTTPVirtualHosts:     []string{"localhost"},
 	HTTPTimeouts:         rpc.DefaultHTTPTimeouts,
 	WSPort:               DefaultWSPort,
-	WSModules:            []string{"net", "web3"},
+	WSModules:            []string{"net", "web3", "tool"},
 	BatchRequestLimit:    1000,
 	BatchResponseMaxSize: 25 * 1000 * 1000,
 	GraphQLVirtualHosts:  []string{"localhost"},
 	P2P: p2p.Config{
-		ListenAddr: ":30303",
-		MaxPeers:   50,
-		NAT:        nat.Any(),
+		ListenAddr:  ":30303",
+		MaxPeers:    50,
+		TEEMaxPeers: 25,
+		NAT:         nat.Any(),
 	},
 	DBEngine: "", // Use whatever exists, will default to Pebble if non-existent and supported
 }

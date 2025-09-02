@@ -215,4 +215,5 @@ type ResettableAncientStore interface {
 type Database interface {
 	KeyValueStore
 	AncientStore
+	AncientFreezer
 }

@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "tool-node.fullname" . }}
+  labels:
+    app: {{ include "tool-node.name" . }}
+spec:
+  serviceName: {{ include "tool-node.fullname" . }}
+  replicas: {{ .Values.replicaCount }}
+  minReadySeconds: 30
+  selector:
+    matchLabels:
+      app: {{ include "tool-node.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "tool-node.name" . }}
+    spec:
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - /usr/local/bin/geth
+          args:
+            {{- toYaml .Values.args | nindent 12 }}
+          ports:
+            - containerPort: 8545
+            - containerPort: 8546
+            - containerPort: 30303
+            - containerPort: 30303
+              protocol: UDP
+            - containerPort: 9060
+            - containerPort: 8551
+            - containerPort: 6060
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: jwtsecret
+              mountPath: /node/jwtsecret
+              subPath: jwt
+              readOnly: true
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        - name: ssh
+          image: "{{ .Values.sshImage.repository }}:{{ .Values.sshImage.tag }}"
+          imagePullPolicy: {{ .Values.sshImage.pullPolicy }}
+          ports:
+            - containerPort: 22
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: ssh-keys
+              mountPath: /home/user/.ssh/authorized_keys
+              subPath: authorized_keys
+              readOnly: true
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      volumes:
+        - name: jwtsecret
+          secret:
+            secretName: {{ include "tool-node.fullname" . }}-jwt
+        - name: ssh-keys
+          configMap:
+            name: {{ include "tool-node.fullname" . }}-ssh-config
+  volumeClaimTemplates:
+    {{- if .Values.persistence.enabled }}
+    - metadata:
+        name: data
+      spec:
+        accessModes:
+          - {{ .Values.persistence.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size }}
+    {{- end }}

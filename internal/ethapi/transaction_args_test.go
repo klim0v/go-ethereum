@@ -34,8 +34,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
+	"github.com/ethereum/go-ethereum/eth/tool"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/event"
+	"github.com/ethereum/go-ethereum/internal/ethapi/override"
 	"github.com/ethereum/go-ethereum/params"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -366,6 +368,24 @@ func (b *backendMock) StateAndHeaderByNumberOrHash(ctx context.Context, blockNrO
 	return nil, nil, nil
 }
 func (b *backendMock) Pending() (*types.Block, types.Receipts, *state.StateDB) { return nil, nil, nil }
+func (b *backendMock) IsToolEnabled() bool {
+	return false
+}
+func (b *backendMock) ToolBlockByHash(_ context.Context, _ common.Hash) *types.Block {
+	return nil
+}
+func (b *backendMock) GetToolNonce(_ context.Context, _ common.Address) (uint64, error) {
+	return 0, nil
+}
+func (b *backendMock) GetToolReceipt(_ common.Hash) (*types.Receipt, *types.Transaction, *types.Header, error) {
+	return nil, nil, nil, nil
+}
+func (b *backendMock) DoToolCall(_ context.Context, _ tool.TransactionArgs, _ uint64, _ *override.StateOverride, _ *override.BlockOverrides) (*core.ExecutionResult, error) {
+	return nil, nil
+}
+func (b *backendMock) SendToolBundle(_ context.Context, _ types.Transactions) (common.Hash, error) {
+	return common.Hash{}, nil
+}
 func (b *backendMock) GetReceipts(ctx context.Context, hash common.Hash) (types.Receipts, error) {
 	return nil, nil
 }

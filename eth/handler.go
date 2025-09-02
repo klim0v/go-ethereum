@@ -28,6 +28,13 @@ import (
 	"time"
 
 	"github.com/dchest/siphash"
+	v1 "github.com/attestantio/go-builder-client/api/v1"
+	prototool "github.com/ethereum/go-ethereum/eth/protocols/tool"
+	"github.com/ethereum/go-ethereum/eth/tee"
+	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/relay"
+	"github.com/holiman/uint256"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/rawdb"
@@ -38,6 +45,7 @@ import (
 	"github.com/ethereum/go-ethereum/eth/fetcher"
 	"github.com/ethereum/go-ethereum/eth/protocols/eth"
 	"github.com/ethereum/go-ethereum/eth/protocols/snap"
+	"github.com/ethereum/go-ethereum/eth/tool"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/event"
 	"github.com/ethereum/go-ethereum/log"
@@ -97,6 +105,10 @@ type txPool interface {
 // handlerConfig is the collection of initialization parameters to create a full
 // node network handler.
 type handlerConfig struct {
+	Tool        *tool.Tool
+	Relay       *relay.Relay
+	TEEVerifier tee.Verifier
+
 	NodeID         enode.ID               // P2P node ID used for tx propagation topology
 	Database       ethdb.Database         // Database for direct sync insertions
 	Chain          *core.BlockChain       // Blockchain to serve data from
@@ -109,6 +121,13 @@ type handlerConfig struct {
 }
 
 type handler struct {
+	tool  *tool.Tool
+	relay *relay.Relay
+
+	teeOnly     bool
+	teeMaxPeers int
+	teeVerifier tee.Verifier
+
 	nodeID    enode.ID
 	networkID uint64
 
@@ -130,6 +149,13 @@ type handler struct {
 	txsSub     event.Subscription
 	blockRange *blockRangeState
 
+	subSlotCh           chan *types.SubSlot
+	subSlotSub          event.Subscription
+	commitmentCh        chan *types.Commitment
+	commitmentSub       event.Subscription
+	nextEpochValRegsCh  chan []*v1.ValidatorRegistration
+	nextEpochValRegsSub event.Subscription
+
 	requiredBlocks map[uint64]common.Hash
 
 	// channels for fetcher, syncer, txsyncLoop
@@ -148,6 +174,10 @@ func newHandler(config *handlerConfig) (*handler, error) {
 		config.EventMux = new(event.TypeMux) // Nicety initialization for tests
 	}
 	h := &handler{
+		tool:        config.Tool,
+		relay:       config.Relay,
+		teeVerifier: config.TEEVerifier,
+
 		nodeID:         config.NodeID,
 		networkID:      config.Network,
 		eventMux:       config.EventMux,
@@ -267,6 +297,8 @@ func (h *handler) runEthPeer(peer *eth.Peer, handler eth.Handler) error {
 		peer.Log().Debug("Ethereum handshake failed", "err", err)
 		return err
 	}
+
+	maybeTeePeer := peer.RunningCap(prototool.ProtocolName, prototool.ProtocolVersions)
 	reject := false // reserved peer slots
 	if h.snapSync.Load() {
 		if snap == nil {
@@ -277,10 +309,13 @@ func (h *handler) runEthPeer(peer *eth.Peer, handler eth.Handler) error {
 				reject = true
 			}
 		}
+	} else if h.teeOnly && !maybeTeePeer {
+		return p2p.DiscUselessPeer
 	}
+
 	// Ignore maxPeers if this is a trusted peer
-	if !peer.Peer.Info().Network.Trusted {
-		if reject || h.peers.len() >= h.maxPeers {
+	if !peer.Peer.Info().Network.Trusted && !maybeTeePeer {
+		if reject || h.peers.len() >= h.maxVanillaPeers() {
 			return p2p.DiscTooManyPeers
 		}
 	}
@@ -308,6 +343,7 @@ func (h *handler) runEthPeer(peer *eth.Peer, handler eth.Handler) error {
 			return err
 		}
 	}
+
 	// Propagate existing transactions. new transactions appearing
 	// after this will be sent via broadcasts.
 	h.syncTransactions(peer)
@@ -450,6 +486,12 @@ func (h *handler) Start(maxPeers int) {
 }
 
 func (h *handler) Stop() {
+	if h.tool.Enabled() {
+		h.commitmentSub.Unsubscribe()       // quits commitmentBroadcastLoop
+		h.subSlotSub.Unsubscribe()          // quits subSlotBroadcastLoop
+		h.nextEpochValRegsSub.Unsubscribe() // quits valRegBroadcastLoop
+	}
+
 	h.txsSub.Unsubscribe() // quits txBroadcastLoop
 	h.blockRange.stop()
 	h.txFetcher.Stop()
@@ -532,10 +574,33 @@ func (h *handler) BroadcastTransactions(txs types.Transactions) {
 // txBroadcastLoop announces new transactions to connected peers.
 func (h *handler) txBroadcastLoop() {
 	defer h.wg.Done()
+
+	nextHeaderCh := make(chan *types.Header, 1)
+	broadcastTxsOrCommitmentFunc := h.BroadcastTransactions
+	if h.tool.Enabled() && h.tool.Config.Leader {
+		broadcastTxsOrCommitmentFunc = h.tryToMakeCommitment
+		nextHeaderSub := h.tool.SubscribeNextHeader(nextHeaderCh)
+		defer nextHeaderSub.Unsubscribe()
+	}
+
 	for {
 		select {
+		case header := <-nextHeaderCh: // TODO:
+			pending := h.txpool.Pending(txpool.PendingFilter{
+				BaseFee:      uint256.MustFromBig(header.BaseFee),
+				GasLimitCap:  params.MaxTxGas,
+				OnlyPlainTxs: true,
+			})
+
+			for _, transactions := range pending {
+				txs := make([]*types.Transaction, 0, len(transactions))
+				for _, transaction := range transactions {
+					txs = append(txs, transaction.Resolve())
+				}
+				h.tryToMakeCommitment(txs)
+			}
 		case event := <-h.txsCh:
-			h.BroadcastTransactions(event.Txs)
+			broadcastTxsOrCommitmentFunc(event.Txs)
 		case <-h.txsSub.Err():
 			return
 		}
@@ -546,8 +611,9 @@ func (h *handler) txBroadcastLoop() {
 // sync is finished.
 func (h *handler) enableSyncedFeatures() {
 	// Mark the local node as synced.
-	h.synced.Store(true)
-
+	if !h.synced.Swap(true) {
+		h.enforceTEEPolicy()
+	}
 	// If we were running snap sync and it finished, disable doing another
 	// round on next sync cycle
 	if h.snapSync.Load() {

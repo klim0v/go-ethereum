@@ -301,8 +301,8 @@ type BlockChainAPI struct {
 }
 
 // NewBlockChainAPI creates a new Ethereum blockchain API.
-func NewBlockChainAPI(b Backend) *BlockChainAPI {
-	return &BlockChainAPI{b}
+func NewBlockChainAPI(b Backend) *ToolBlockChainAPI {
+	return &ToolBlockChainAPI{&BlockChainAPI{b}}
 }
 
 // ChainId is the EIP-155 replay-protection chain id for the current Ethereum chain config.
@@ -1335,11 +1335,11 @@ type TransactionAPI struct {
 }
 
 // NewTransactionAPI creates a new RPC service with methods for interacting with transactions.
-func NewTransactionAPI(b Backend, nonceLock *AddrLocker) *TransactionAPI {
+func NewTransactionAPI(b Backend, nonceLock *AddrLocker) *ToolTransactionAPI {
 	// The signer used by the API should always be the 'latest' known one because we expect
 	// signers to be backwards-compatible with old transactions.
 	signer := types.LatestSigner(b.ChainConfig())
-	return &TransactionAPI{b, nonceLock, signer}
+	return &ToolTransactionAPI{&TransactionAPI{b, nonceLock, signer}}
 }
 
 // GetBlockTransactionCountByNumber returns the number of transactions in the block with the given block number.

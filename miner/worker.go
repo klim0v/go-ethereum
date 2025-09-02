@@ -94,6 +94,7 @@ type newPayloadResult struct {
 
 // generateParams wraps various settings for generating sealing task.
 type generateParams struct {
+	toolParams
 	timestamp   uint64            // The timestamp for sealing task
 	forceTime   bool              // Flag whether the given timestamp is immutable or not
 	parentHash  common.Hash       // Parent block hash, empty means the latest chain head
@@ -131,6 +132,10 @@ func (miner *Miner) generateWork(genParam *generateParams, witness bool) *newPay
 		err := miner.fillTransactions(interrupt, work)
 		if errors.Is(err, errBlockInterruptedByTimeout) {
 			log.Warn("Block building is interrupted", "allowance", common.PrettyDuration(miner.config.Recommit))
+		}
+	} else if len(genParam.txChunks) != 0 {
+		if err = miner.commitToolTransactions(work, genParam.toolParams); err != nil {
+			return &newPayloadResult{err: err}
 		}
 	}
 	body := types.Body{Transactions: work.txs, Withdrawals: genParam.withdrawals}
@@ -203,10 +208,14 @@ func (miner *Miner) prepareWork(genParams *generateParams, witness bool) (*envir
 		timestamp = parent.Time + 1
 	}
 	// Construct the sealing block header.
+	gasCeil := genParams.toolParams.gasCeil
+	if gasCeil == 0 {
+		gasCeil = miner.config.GasCeil
+	}
 	header := &types.Header{
 		ParentHash: parent.Hash(),
 		Number:     new(big.Int).Add(parent.Number, common.Big1),
-		GasLimit:   core.CalcGasLimit(parent.GasLimit, miner.config.GasCeil),
+		GasLimit:   core.CalcGasLimit(parent.GasLimit, gasCeil),
 		Time:       timestamp,
 		Coinbase:   genParams.coinbase,
 	}

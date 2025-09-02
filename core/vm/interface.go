@@ -29,6 +29,8 @@ import (
 
 // StateDB is an EVM database for full state querying.
 type StateDB interface {
+	tracing.StateDBTool
+
 	CreateAccount(common.Address)
 	CreateContract(common.Address)
 

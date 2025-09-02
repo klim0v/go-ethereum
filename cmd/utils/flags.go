@@ -1307,6 +1307,7 @@ func setEtherbase(ctx *cli.Context, cfg *ethconfig.Config) {
 func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 	setNodeKey(ctx, cfg)
 	setNAT(ctx, cfg)
+	setToolP2P(ctx, cfg)
 	setListenAddress(ctx, cfg)
 	setBootstrapNodes(ctx, cfg)
 	setBootstrapNodesV5(ctx, cfg)
@@ -1315,7 +1316,7 @@ func SetP2PConfig(ctx *cli.Context, cfg *p2p.Config) {
 		cfg.MaxPeers = ctx.Int(MaxPeersFlag.Name)
 	}
 	ethPeers := cfg.MaxPeers
-	log.Info("Maximum peer count", "ETH", ethPeers, "total", cfg.MaxPeers)
+	log.Info("Maximum peer count", "ETH", ethPeers, "TOOL", cfg.TEEMaxPeers, "total", cfg.MaxPeers)
 
 	if ctx.IsSet(MaxPendingPeersFlag.Name) {
 		cfg.MaxPendingPeers = ctx.Int(MaxPendingPeersFlag.Name)
@@ -1831,6 +1832,7 @@ func SetEthConfig(ctx *cli.Context, stack *node.Node, cfg *ethconfig.Config) {
 			SetDNSDiscoveryDefaults(cfg, params.MainnetGenesisHash)
 		}
 	}
+	setTool(ctx, cfg)
 	// Set any dangling config values
 	if ctx.String(CryptoKZGFlag.Name) != "gokzg" && ctx.String(CryptoKZGFlag.Name) != "ckzg" {
 		Fatalf("--%s flag must be 'gokzg' or 'ckzg'", CryptoKZGFlag.Name)
@@ -1926,11 +1928,11 @@ func MakeBeaconLightConfig(ctx *cli.Context) bparams.ClientConfig {
 		}
 		copy(config.Checkpoint[:len(c)], c)
 	}
-	if config.Checkpoint == (common.Hash{}) {
+	if config.Checkpoint == (common.Hash{}) && ctx.IsSet(BeaconApiFlag.Name) {
 		Fatalf("Beacon checkpoint not specified")
 	}
 	config.Apis = ctx.StringSlice(BeaconApiFlag.Name)
-	if config.Apis == nil {
+	if config.Apis == nil && ctx.IsSet(BeaconApiFlag.Name) {
 		Fatalf("Beacon node light client API URL not specified")
 	}
 	config.CustomHeader = make(map[string]string)

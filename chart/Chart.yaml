@@ -1,0 +1,10 @@
+apiVersion: v2
+name: tool-node
+description: A basic Helm chart for tool-node application
+type: application
+version: 0.1.0
+appVersion: "1.0"
+dependencies:
+  - name: prysm
+    version: "*"
+    repository: "file://charts/prysm"

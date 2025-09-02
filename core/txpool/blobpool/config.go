@@ -22,6 +22,8 @@ import (
 
 // Config are the configuration parameters of the blob transaction pool.
 type Config struct {
+	Disable bool
+
 	Datadir   string // Data directory containing the currently executable blobs
 	Datacap   uint64 // Soft-cap of database storage (hard cap is larger due to overhead)
 	PriceBump uint64 // Minimum price bump percentage to replace an already existing nonce

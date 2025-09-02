@@ -31,10 +31,12 @@ import (
 	"github.com/ethereum/go-ethereum/core/txpool/blobpool"
 	"github.com/ethereum/go-ethereum/core/txpool/legacypool"
 	"github.com/ethereum/go-ethereum/eth/gasprice"
+	"github.com/ethereum/go-ethereum/eth/tool"
 	"github.com/ethereum/go-ethereum/ethdb"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/miner"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/relay"
 )
 
 // FullNodeGPO contains default gasprice oracle settings for full node.
@@ -54,6 +56,7 @@ var Defaults = Config{
 	NetworkId:          0, // enable auto configuration of networkID == chainID
 	TxLookupLimit:      2350000,
 	TransactionHistory: 2350000,
+	BlockHistory:       0,
 	LogHistory:         2350000,
 	StateHistory:       params.FullImmutabilityThreshold,
 	DatabaseCache:      512,
@@ -63,6 +66,8 @@ var Defaults = Config{
 	SnapshotCache:      102,
 	FilterLogCacheSize: 32,
 	Miner:              miner.DefaultConfig,
+	Tool:               tool.DefaultConfig,
+	Relay:              relay.DefaultConfig,
 	TxPool:             legacypool.DefaultConfig,
 	BlobPool:           blobpool.DefaultConfig,
 	RPCGasCap:          50000000,
@@ -100,6 +105,7 @@ type Config struct {
 	TxLookupLimit uint64 `toml:",omitempty"` // The maximum number of blocks from head whose tx indices are reserved.
 
 	TransactionHistory   uint64 `toml:",omitempty"` // The maximum number of blocks from head whose tx indices are reserved.
+	BlockHistory         uint64 `toml:",omitempty"` // The maximum number of blocks from head whose block body/header/receipt/diff/hash are reserved.
 	LogHistory           uint64 `toml:",omitempty"` // The maximum number of blocks from head where a log search index is maintained.
 	LogNoHistory         bool   `toml:",omitempty"` // No log search index is maintained.
 	LogExportCheckpoints string // export log index checkpoints to file
@@ -133,6 +139,8 @@ type Config struct {
 
 	// Mining options
 	Miner miner.Config
+	Tool  tool.Config
+	Relay relay.Config
 
 	// Transaction pool options
 	TxPool   legacypool.Config

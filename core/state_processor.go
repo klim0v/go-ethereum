@@ -21,12 +21,14 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/consensus/misc"
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/tracing"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -150,6 +152,20 @@ func ApplyTransactionWithEVM(msg *Message, gp *GasPool, statedb *state.StateDB, 
 	if err != nil {
 		return nil, err
 	}
+
+	if debug := evm.Config.Tracer != nil; debug && result.Failed() {
+		log.Debug("Failed tx execution",
+			"subSlot", blockHash,
+			"tx", tx.Hash().Hex(),
+			"gasLimit", msg.GasLimit,
+			"usedGas", result.UsedGas,
+			"maxUsedGas", result.MaxUsedGas,
+			"revertData", hexutil.Bytes(result.ReturnData),
+			"journal", statedb.Journal(),
+			"err", result.Err,
+		)
+	}
+
 	// Update the state with pending changes.
 	var root []byte
 	if evm.ChainConfig().IsByzantium(blockNumber) {

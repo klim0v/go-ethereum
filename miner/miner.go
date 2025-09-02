@@ -30,6 +30,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/state"
 	"github.com/ethereum/go-ethereum/core/txpool"
 	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/eth/tool"
 	"github.com/ethereum/go-ethereum/params"
 )
 
@@ -65,6 +66,8 @@ var DefaultConfig = Config{
 // Miner is the main object which takes care of submitting new work to consensus
 // engine and gathering the sealing result.
 type Miner struct {
+	tool *tool.Tool
+
 	confMu      sync.RWMutex // The lock used to protect the config fields: GasCeil, GasTip and Extradata
 	config      *Config
 	chainConfig *params.ChainConfig
@@ -135,6 +138,9 @@ func (miner *Miner) SetGasTip(tip *big.Int) error {
 
 // BuildPayload builds the payload according to the provided parameters.
 func (miner *Miner) BuildPayload(args *BuildPayloadArgs, witness bool) (*Payload, error) {
+	if miner.IsTool() {
+		return miner.setupNextToolHeader(args)
+	}
 	return miner.buildPayload(args, witness)
 }
 

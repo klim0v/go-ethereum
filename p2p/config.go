@@ -21,6 +21,7 @@ import (
 	"encoding"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/mclock"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/p2p/enode"
@@ -32,6 +33,11 @@ import (
 
 // Config holds Server options.
 type Config struct {
+	TEEVerifier common.Address
+	TEEPassList []common.Hash
+	TEEMaxPeers int
+	PublicSync  bool
+
 	// This field must be set to a valid secp256k1 private key.
 	PrivateKey *ecdsa.PrivateKey `toml:"-"`
 

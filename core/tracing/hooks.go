@@ -47,6 +47,8 @@ type OpContext interface {
 
 // StateDB gives tracers access to the whole state.
 type StateDB interface {
+	StateDBTool
+
 	GetBalance(common.Address) *uint256.Int
 	GetNonce(common.Address) uint64
 	GetCode(common.Address) []byte
